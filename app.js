@@ -12,9 +12,8 @@ const mongoose   = require('mongoose');
 // MD5 Hashing
 //const md5        = require('md5');
 
-const bcrypt       = require('bcrypt');
-
-const saltRounds   = parseInt(process.env.SALT_ROUNDS);
+// const bcrypt       = require('bcrypt');
+// const saltRounds   = parseInt(process.env.SALT_ROUNDS);
 
 
 
@@ -55,27 +54,31 @@ app.post('/register', (req, res) => {
     // let pw    = req.body.password;
     //
     // console.log(`${email}, ${pw}`);
-    bcrypt
-      .hash(req.body.password, saltRounds)
-      .then(hash => {
-          // Store hash in your password DB.
-          let newUser = new userModel({
-            email:    req.body.username,
-            password: hash
-          });
 
-          newUser
-            .save()
-            .then(doc => {
-              res.render('secrets');
-            })
-            .catch(error => {
-              res.send(error);
-            });
-      })
-      .catch(error => {
-        res.send(error);
-      });
+
+
+    //    - - - Example of using node.js.bcrypt - - -
+    // bcrypt
+    //   .hash(req.body.password, saltRounds)
+    //   .then(hash => {
+    //       // Store hash in your password DB.
+    //       let newUser = new userModel({
+    //         email:    req.body.username,
+    //         password: hash
+    //       });
+    //
+    //       newUser
+    //         .save()
+    //         .then(doc => {
+    //           res.render('secrets');
+    //         })
+    //         .catch(error => {
+    //           res.send(error);
+    //         });
+    //   })
+    //   .catch(error => {
+    //     res.send(error);
+    //   });
 });
 
 app.post('/login', (req, res) => {
@@ -85,21 +88,22 @@ app.post('/login', (req, res) => {
       .then(foundDocument => {
         if (foundDocument)
         {
-            bcrypt
-              .compare(req.body.password, foundDocument.password)
-              .then(result => {
-                if (result === true)
-                {
-                  res.render('secrets');
-                }
-                else {
-                  // Do something else when the password is incorrect..
-                  res.send('<h1>No User with that Email/Password found!</h1>');
-                }
-              })
-              .catch(error => {
-                  res.send('<h1>No User with that Email/Password found!</h1>');
-              });
+            //    - - - Example of using node.js.bcrypt - - -
+            // bcrypt
+            //   .compare(req.body.password, foundDocument.password)
+            //   .then(result => {
+            //     if (result === true)
+            //     {
+            //       res.render('secrets');
+            //     }
+            //     else {
+            //       // Do something else when the password is incorrect..
+            //       res.send('<h1>No User with that Email/Password found!</h1>');
+            //     }
+            //   })
+            //   .catch(error => {
+            //       res.send('<h1>No User with that Email/Password found!</h1>');
+            //   });
         }
         else
         {
