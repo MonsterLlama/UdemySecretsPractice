@@ -1,17 +1,25 @@
 //jshint esversion:6
+require('dotenv').config();
+
 const express    = require('express');
 const bodyParser = require('body-parser');
 const ejs        = require('ejs');
 
 // Database Backend access
 const mongoose   = require('mongoose');
-const encrypt    = require('mongoose-encryption');
+//const encrypt    = require('mongoose-encryption');
 
-require('dotenv').config();
+// MD5 Hashing
+//const md5        = require('md5');
+
+const bcrypt       = require('bcrypt');
+
+const saltRounds   = parseInt(process.env.SALT_ROUNDS);
+
 
 
 mongoose.set('strictQuery', true);
-mongoose.connect('mongodb+srv://MonsterLlama:qiacI8ZHXLfxAJrU@cluster0.4umfurm.mongodb.net/userDB',
+mongoose.connect(`mongodb+srv://${process.env.AUTH_LOGIN}:${process.env.AUTH_PW}@${process.env.MONGO_DB_CLUSTER}.mongodb.net/userDB`,
                 {useNewUrlParser: true});
 
 const userSchema = mongoose.Schema({
@@ -20,7 +28,7 @@ const userSchema = mongoose.Schema({
 });
 
 //  Set up the Mongoose encryption..
-userSchema.plugin(encrypt, {secret: process.env.DB_Secret, encryptedFields:['password']});
+//userSchema.plugin(encrypt, {secret: process.env.DB_Secret, encryptedFields:['password']});
 
 const userModel = mongoose.model('User', userSchema);
 
@@ -33,9 +41,11 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', (req, res) => {
   res.render('home');
 });
+
 app.get('/login', (req, res) => {
   res.render('login');
 });
+
 app.get('/register', (req, res) => {
   res.render('register');
 });
@@ -45,20 +55,26 @@ app.post('/register', (req, res) => {
     // let pw    = req.body.password;
     //
     // console.log(`${email}, ${pw}`);
+    bcrypt
+      .hash(req.body.password, saltRounds)
+      .then(hash => {
+          // Store hash in your password DB.
+          let newUser = new userModel({
+            email:    req.body.username,
+            password: hash
+          });
 
-    let newUser = new userModel({
-      email:    req.body.username,
-      password: req.body.password
-    });
-
-    newUser
-      .save()
-      .then(doc => {
-        console.log(doc);
-        res.render('secrets');
+          newUser
+            .save()
+            .then(doc => {
+              res.render('secrets');
+            })
+            .catch(error => {
+              res.send(error);
+            });
       })
       .catch(error => {
-        console.log(error);
+        res.send(error);
       });
 });
 
@@ -67,25 +83,31 @@ app.post('/login', (req, res) => {
     userModel
       .findOne({email: req.body.username})
       .then(foundDocument => {
-
-        console.log(foundDocument);
-
         if (foundDocument)
         {
-            if(req.body.password === foundDocument.password){
-              res.render('secrets');
-            }
-            else {
-              console.log('Wrong Password!');
-            }
+            bcrypt
+              .compare(req.body.password, foundDocument.password)
+              .then(result => {
+                if (result === true)
+                {
+                  res.render('secrets');
+                }
+                else {
+                  // Do something else when the password is incorrect..
+                  res.send('<h1>No User with that Email/Password found!</h1>');
+                }
+              })
+              .catch(error => {
+                  res.send('<h1>No User with that Email/Password found!</h1>');
+              });
         }
         else
         {
-            console.log('No User with that Email/Password found!');
+            res.send('<h1>No User with that Email/Password found!</h1>');
         }
       })
       .catch(error => {
-          console.log(error);
+          res.send(error);
       });
 
 });
