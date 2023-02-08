@@ -51,7 +51,7 @@ mongoose.connect(`mongodb+srv://${process.env.AUTH_LOGIN}:${process.env.AUTH_PW}
                 {useNewUrlParser: true});
 
 const userSchema = mongoose.Schema({
-    email: String,
+    email:    String,
     password: String
 });
 
@@ -94,6 +94,19 @@ app.get('/secrets', (req, res) => {
   }
 });
 
+app.get('/logout', (req, res) => {
+
+  req.logout(function(err) {
+    if (err) {
+      res.send(err);
+   }
+   else
+   {
+      res.redirect('/');
+   }
+  });
+});
+
 app.post('/register', (req, res) => {
     // let email = req.body.username;
     // let pw    = req.body.password;
@@ -119,21 +132,24 @@ app.post('/register', (req, res) => {
 
 app.post('/login', (req, res) => {
 
-    userModel
-      .findOne({email: req.body.username})
-      .then(foundDocument => {
-        if (foundDocument)
-        {
-        }
-        else
-        {
-            res.send('<h1>No User with that Email/Password found!</h1>');
-        }
-      })
-      .catch(error => {
-          res.send(error);
-      });
+  let user = new userModel({
+    username: req.body.username,
+    password: req.body.password
+  });
 
+  console.log(user);
+
+  req.login(user, error => {
+    if (error) {
+      res.send('<h1>Error logging in!</h1><br />' +  error);
+    }
+    else
+    {
+      passport.authenticate('local')(req, res, () => {
+      res.redirect('/secrets');
+    });
+    }
+  });
 });
 
 
@@ -204,3 +220,19 @@ app.listen(PORT, function() {
 //   });
 //
 // });
+
+
+    // userModel
+      // .findOne({email: req.body.username})
+      // .then(foundDocument => {
+      //   if (foundDocument)
+      //   {
+      //   }
+      //   else
+      //   {
+      //       res.send('<h1>No User with that Email/Password found!</h1>');
+      //   }
+      // })
+      // .catch(error => {
+      //     res.send(error);
+      // });
