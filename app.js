@@ -130,26 +130,30 @@ app.post('/register', (req, res) => {
       });
 });
 
-app.post('/login', (req, res) => {
+app.post('/login',
+  passport.authenticate('local', { failureRedirect: '/login' }),
+  (req, res) => {
 
-  let user = new userModel({
-    username: req.body.username,
-    password: req.body.password
-  });
-
-  console.log(user);
-
-  req.login(user, error => {
-    if (error) {
-      res.send('<h1>Error logging in!</h1><br />' +  error);
-    }
-    else
-    {
-      passport.authenticate('local')(req, res, () => {
-      res.redirect('/secrets');
+    let user = new userModel({
+      username: req.body.username,
+      password: req.body.password
     });
-    }
-  });
+
+    console.log(user);
+
+    req.login(
+      user,
+      error => {
+        if (error) {
+          res.send('<h1>Error logging in!</h1><br />' +  error);
+        }
+        else
+        {
+          passport.authenticate('local')(req, res, () => {
+          res.redirect('/secrets');
+        });
+      }
+    });
 });
 
 
