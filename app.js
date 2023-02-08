@@ -5,6 +5,7 @@ const express    = require('express');
 const bodyParser = require('body-parser');
 const ejs        = require('ejs');
 
+
 // Database Backend access
 const mongoose   = require('mongoose');
 //const encrypt    = require('mongoose-encryption');
@@ -21,6 +22,12 @@ const passportLocalMongoose = require('passport-local-mongoose');
 
 const app = express();
 
+// console.log(typeof(express)); // function
+// console.log(typeof(app));     // function
+// console.log(app);
+// console.log(express.static);
+// console.log(express.static('public'));
+
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
@@ -29,12 +36,15 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {secure: false}
   }));
 
 // Tell express.js to use passport and use passport to deal with the sessions
 app.use(passport.initialize());
 app.use(passport.session());
+
+//console.log(typeof(mongoose));
 
 mongoose.set('strictQuery', true);
 mongoose.connect(`mongodb+srv://${process.env.AUTH_LOGIN}:${process.env.AUTH_PW}@${process.env.MONGO_DB_CLUSTER}.mongodb.net/userDB`,
@@ -74,14 +84,37 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
+app.get('/secrets', (req, res) => {
+
+  if (req.isAuthenticated()){
+    res.render('secrets');
+  }
+  else {
+    res.redirect('/login');
+  }
+});
+
 app.post('/register', (req, res) => {
     // let email = req.body.username;
     // let pw    = req.body.password;
     //
     // console.log(`${email}, ${pw}`);
-
-
-
+    userModel
+      .register({
+                  username:req.body.username
+                },
+                req.body.password
+      )
+      .then(user => {
+        passport
+          .authenticate('local')(req, res, () => {
+            console.log('username: ', user.username);
+            res.redirect('/secrets');
+          });
+      })
+      .catch(error => {
+        res.send(error);
+      });
 });
 
 app.post('/login', (req, res) => {
@@ -110,6 +143,7 @@ app.listen(PORT, function() {
   console.log(`Server started on port ${PORT}.`);
 });
 
+//console.log(app);
 
 // app.post('/register', (req, res) => {
     //    - - - Example of using node.js.bcrypt - - -
