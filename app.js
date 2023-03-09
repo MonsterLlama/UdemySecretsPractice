@@ -12,6 +12,8 @@ const session               = require('express-session');
 const passport              = require('passport');
 const passportLocalMongoose = require('passport-local-mongoose');
 
+const findOrCreate          = require('mongoose-findorcreate');
+
 // From: https://www.passportjs.org/packages/passport-google-oauth20/#configure-strategy
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
@@ -46,6 +48,8 @@ const userSchema = mongoose.Schema({
 // passportLocalMongoose is what we're going to use to hash and salt our passwords
 // and to save our users into our MongoDB database.
 userSchema.plugin(passportLocalMongoose);
+
+userSchema.plugin(findOrCreate);
 
 const userModel = mongoose.model('User', userSchema);
 
