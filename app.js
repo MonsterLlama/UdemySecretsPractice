@@ -40,6 +40,7 @@ mongoose.connect(`mongodb+srv://${process.env.AUTH_LOGIN}:${process.env.AUTH_PW}
                 {useNewUrlParser: true});
 
 const userSchema = mongoose.Schema({
+    googleId: String,
     email:    String,
     password: String
 });
@@ -55,8 +56,22 @@ const userModel = mongoose.model('User', userSchema);
 
 passport.use(userModel.createStrategy());
 
-passport.serializeUser(userModel.serializeUser());
-passport.deserializeUser(userModel.deserializeUser());
+// passport.serializeUser(userModel.serializeUser());
+// passport.deserializeUser(userModel.deserializeUser());
+
+//
+//  Add Support for multiple Authentication Strategies (eg., Google)
+//
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+    userModel
+    .findById(id, (err, user) => {
+      done(err, user);
+    });
+});
 
 // From: https://www.passportjs.org/packages/passport-google-oauth20/#configure-strategy
 passport.use(new GoogleStrategy({
@@ -65,7 +80,7 @@ passport.use(new GoogleStrategy({
     callbackURL:  "http://localhost:3000/auth/google/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+    userModel.findOrCreate({ googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
@@ -83,9 +98,16 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-app.get('/auth/google', (req, res) => {
-  
-});
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile'] })
+);
+
+app.get('/auth/google/secrets',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication, redirect to secrets.
+    res.redirect('/secrets');
+  });
 
 app.get('/secrets', (req, res) => {
 
