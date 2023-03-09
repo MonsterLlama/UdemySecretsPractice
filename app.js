@@ -60,8 +60,8 @@ passport.deserializeUser(userModel.deserializeUser());
 
 // From: https://www.passportjs.org/packages/passport-google-oauth20/#configure-strategy
 passport.use(new GoogleStrategy({
-    clientID:     OAUTH_CLIENT_ID,
-    clientSecret: OAUTH_CLIENT_SECRET,
+    clientID:     process.env.OAUTH_CLIENT_ID,
+    clientSecret: process.env.OAUTH_CLIENT_SECRET,
     callbackURL:  "http://localhost:3000/auth/google/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
@@ -81,6 +81,10 @@ app.get('/login', (req, res) => {
 
 app.get('/register', (req, res) => {
   res.render('register');
+});
+
+app.get('/auth/google', (req, res) => {
+  
 });
 
 app.get('/secrets', (req, res) => {
